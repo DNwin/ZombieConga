@@ -10,40 +10,40 @@
 
 @implementation GameScene
 
--(void)didMoveToView:(SKView *)view {
-    /* Setup your scene here */
-    SKLabelNode *myLabel = [SKLabelNode labelNodeWithFontNamed:@"Chalkduster"];
+- (void) didMoveToView:(SKView *)view {
+    self.backgroundColor = [SKColor whiteColor];
     
-    myLabel.text = @"Hello, World!";
-    myLabel.fontSize = 65;
-    myLabel.position = CGPointMake(CGRectGetMidX(self.frame),
-                                   CGRectGetMidY(self.frame));
+    // Make background sprite node
+    SKSpriteNode *background = [[SKSpriteNode alloc] initWithImageNamed:@"background1"];
     
-    [self addChild:myLabel];
+    // Set background position using the size of the view
+    // X, Y positions in Sprite Kit start in bottom left
+    // Default anchor point is middle of picture CGPoint 0.5, 0.5
+    background.position = CGPointMake(self.size.width/2, self.size.height/2);
+    background.anchorPoint = CGPointMake(0.5, 0.5);
+    // Set z position to prevent nodes from spawning under background
+    background.zPosition = -1;
+
+    
+    //  ** Change anchor to bottom left
+    // background.anchorPoint = CGPointZero;
+    // background.position = CGPointZero;
+    
+    // ** Rotation about z axis around anchor points
+    // background.zRotation = M_PI/8;
+
+    // Add sprite node as a child
+    [self addChild:background];
+    
+    
+    // Add zombie node
+    SKSpriteNode *zombieNode = [[SKSpriteNode alloc] initWithImageNamed:@"zombie1"];
+    zombieNode.position = CGPointMake(400.0, 400.0);
+    // Scale the node 2x
+    [zombieNode setScale:2.0];
+    [self addChild:zombieNode];
+
 }
 
--(void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event {
-    /* Called when a touch begins */
-    
-    for (UITouch *touch in touches) {
-        CGPoint location = [touch locationInNode:self];
-        
-        SKSpriteNode *sprite = [SKSpriteNode spriteNodeWithImageNamed:@"Spaceship"];
-        
-        sprite.xScale = 0.5;
-        sprite.yScale = 0.5;
-        sprite.position = location;
-        
-        SKAction *action = [SKAction rotateByAngle:M_PI duration:1];
-        
-        [sprite runAction:[SKAction repeatActionForever:action]];
-        
-        [self addChild:sprite];
-    }
-}
-
--(void)update:(CFTimeInterval)currentTime {
-    /* Called before each frame is rendered */
-}
 
 @end
