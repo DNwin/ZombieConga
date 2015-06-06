@@ -12,9 +12,10 @@
 
 @property (strong, nonatomic) SKSpriteNode *zombieNode; // zombie node;
 @property (nonatomic) NSTimeInterval lastUpdateTime;
-@property (nonatomic) NSTimeInterval dt; // Difference in time per frame
-@property (nonatomic) CGFloat zombieMovePointsPerSec;
-@property (nonatomic) CGPoint velocity;
+@property (nonatomic) NSTimeInterval dt; // Time per frame in ms
+@property (nonatomic) CGFloat zombieMovePointsPerSec; // Desired pixels/sec
+@property (nonatomic) CGPoint velocity; // Current velocity of the zombie
+@property (nonatomic) CGRect playableRect; // Playable rectangle
 
 @end;
 
@@ -23,6 +24,8 @@
 
 
 #pragma mark - Lifecycle
+
+// Designated init
 - (instancetype) initWithSize:(CGSize)size {
     self = [super initWithSize:size];
     if (self) {
@@ -30,8 +33,24 @@
         _lastUpdateTime = 0;
         _dt = 0;
         _velocity = CGPointZero;
+        
+        // playableRect
+        CGFloat maxAspectRatio = 16.0/9.0;
+        CGFloat playableHeight = self.size.width / maxAspectRatio;
+        // Size of top and bottom margins
+        CGFloat playableMargin = (self.size.height - playableHeight)/2.0;
+        self.playableRect = CGRectMake(0, playableMargin,
+                                       self.size.width, playableHeight);
+        
     }
     return self;
+}
+
+// Did not use scene editor so this init is not required
+- (instancetype) initWithCoder:(NSCoder *)aDecoder {
+    @throw [NSException exceptionWithName:@"Wrong initiazlier"
+                                   reason:@"initWithCoder has not been implemented"
+                                 userInfo:nil];
 }
 
 - (void) didMoveToView:(SKView *)view {
@@ -66,8 +85,7 @@
 
 }
 
-- (void)update:(NSTimeInterval)currentTime
-{
+- (void)update:(NSTimeInterval)currentTime {
     // Calculate the amount of time it takes per frame in ms (dt)
     if (self.lastUpdateTime > 0) {
         self.dt = currentTime - self.lastUpdateTime;
@@ -79,6 +97,7 @@
     
     [self moveSprite:self.zombieNode withVelocity:self.velocity];
     [self boundsCheckZombie];
+    [self debugDrawPlayableArea];
 }
 
 #pragma mark - Custom Accessors
@@ -106,9 +125,24 @@
 
 #pragma mark - Private
 
+- (void)debugDrawPlayableArea {
+    SKShapeNode *shape = [[SKShapeNode alloc] init];
+    // Configure path
+    CGMutablePathRef path = CGPathCreateMutable();;
+    CGPathAddRect(path, nil, self.playableRect);
+    // Configure shape
+    shape.path = path;
+    shape.strokeColor = [SKColor redColor];
+    shape.lineWidth = 4.0;
+    [self addChild:shape];
+}
+
+// Checks the current position of zombie, reverses velocity if out of bounds
 - (void)boundsCheckZombie {
-    CGPoint bottomLeft = CGPointZero;
-    CGPoint topRight = CGPointMake(self.size.width, self.size.height);
+    // Set points to playable rect
+    CGPoint bottomLeft = CGPointMake(0, CGRectGetMinY(self.playableRect));
+    CGPoint topRight = CGPointMake(CGRectGetWidth(self.playableRect),
+                                   CGRectGetMaxY(self.playableRect));
     
     CGPoint newPosition = self.zombieNode.position;
     CGPoint newVelociy = self.velocity;
