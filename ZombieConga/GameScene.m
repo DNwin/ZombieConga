@@ -9,6 +9,10 @@
 #import "GameScene.h"
 #import "MyUtils.h"
 
+
+static const CGFloat ZOMBIE_ROTATE_RADIANS_PER_SEC = 4.0 * M_PI;
+#define DEFAULT_MOVE_POINTS_VALUE 480.0
+
 @interface GameScene()
 
 @property (strong, nonatomic) SKSpriteNode *zombieNode; // zombie node;
@@ -17,6 +21,7 @@
 @property (nonatomic) CGFloat zombieMovePointsPerSec; // Desired pixels/sec
 @property (nonatomic) CGPoint velocity; // Current velocity of the zombie
 @property (nonatomic) CGRect playableRect; // Playable rectangle
+@property (nonatomic) CGPoint lastTouchLocation; // Last location touched
 
 @end;
 
@@ -34,6 +39,7 @@
         _lastUpdateTime = 0;
         _dt = 0;
         _velocity = CGPointZero;
+        _lastTouchLocation = CGPointZero;
         
         // playableRect
         CGFloat maxAspectRatio = 16.0/9.0;
@@ -79,11 +85,11 @@
     // Add sprite node as a child
     [self addChild:background];
     
-    
     // Setup and add zombie node
     self.zombieNode.position = CGPointMake(400.0, 400.0);
     [self addChild:self.zombieNode];
-
+    
+    [self debugDrawPlayableArea];
 }
 
 - (void)update:(NSTimeInterval)currentTime {
@@ -98,12 +104,15 @@
     
     [self moveSprite:self.zombieNode withVelocity:self.velocity];
     [self boundsCheckZombie];
-    [self debugDrawPlayableArea];
+    [self rotateSprite:self.zombieNode toFace:self.velocity rotationSpeed:ZOMBIE_ROTATE_RADIANS_PER_SEC];
+    [self distanceBetweenTouchCheckZombie];
+    
+
 }
 
 #pragma mark - Custom Accessors
 
-#define DEFAULT_MOVE_POINTS_VALUE 480.0
+
 - (CGFloat)zombieMovePointsPerSec {
     if (!_zombieMovePointsPerSec) {
         _zombieMovePointsPerSec = DEFAULT_MOVE_POINTS_VALUE;
@@ -125,6 +134,15 @@
 }
 
 #pragma mark - Private
+
+// Check distance between last touch and position and stop moving when close
+- (void)distanceBetweenTouchCheckZombie
+{
+    CGPoint offset = CGPointSubtract(self.zombieNode.position, self.lastTouchLocation);
+    if (CGPointLength(offset) <= self.zombieMovePointsPerSec*self.dt) {
+        self.velocity = CGPointZero;
+    }
+}
 
 - (void)debugDrawPlayableArea {
     SKShapeNode *shape = [[SKShapeNode alloc] init];
@@ -172,13 +190,26 @@
 {
 
     // Multiply intended velocity by time per frame to get distance
-    CGPoint amountToMove = CGPointMake(velocity.x * (CGFloat)self.dt,
-                                       velocity.y * (CGFloat)self.dt);
-    NSLog(@"Amount to move: %f", hypot(amountToMove.x, amountToMove.y));
+    CGPoint amountToMove = CGPointMultiplyScalar(velocity, self.dt);
+    
+    //NSLog(@"Amount to move: %f", hypot(amountToMove.x, amountToMove.y));
     
     // Update position of sprite
-    sprite.position = CGPointMake(sprite.position.x + amountToMove.x,
-                                  sprite.position.y + amountToMove.y);
+    sprite.position = CGPointAdd(sprite.position, amountToMove);
+}
+
+// Rotates a sprite with a rotation speed towards a direction vector
+- (void)rotateSprite:(SKSpriteNode *)sprite
+              toFace:(CGPoint)direction
+       rotationSpeed:(CGFloat)rotateRadiansPerSec {
+    
+    // Find shortest angle between zombie and direction
+    CGFloat directionAngle = CGPointToAngle(direction);
+    CGFloat shortestAngleInRad = ScalarShortestAngleBetween(sprite.zRotation, directionAngle);
+    // Get rotation distance per frame using given rotation speed
+    CGFloat amtToRotate = MIN(rotateRadiansPerSec * (CGFloat)self.dt, fabs(shortestAngleInRad));
+    // If angle between is shorter than amount to rotate, stop
+    sprite.zRotation += ScalarSign(shortestAngleInRad) * amtToRotate;
 }
 
 - (void)sceneTouched:(CGPoint)touchLocation
@@ -188,6 +219,9 @@
 
 // moveZombieTowards: - Takes in a location and sets the velocity property
 - (void)moveZombieToward:(CGPoint)location {
+    
+    self.lastTouchLocation = location;
+    
     CGPoint offsetVector = CGPointMake(location.x - self.zombieNode.position.x,
                                  location.y - self.zombieNode.position.y);
     // Get length of offset vector
