@@ -7,6 +7,7 @@
 //
 
 #import "GameScene.h"
+#import "MyUtils.h"
 
 @interface GameScene()
 

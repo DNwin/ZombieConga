@@ -55,6 +55,7 @@
 		95A99D331B21BC5F005EDF41 /* YouLose.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = YouLose.png; sourceTree = "<group>"; };
 		95A99D341B21BC5F005EDF41 /* YouWin.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = YouWin.png; sourceTree = "<group>"; };
 		95A99D3A1B21BC69005EDF41 /* sprites.atlas */ = {isa = PBXFileReference; lastKnownFileType = folder.skatlas; name = sprites.atlas; path = Images/sprites.atlas; sourceTree = "<group>"; };
+		95E37DAC1B22FA20007F993F /* MyUtils.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MyUtils.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -102,6 +103,7 @@
 				95A99D091B21B55B005EDF41 /* AppDelegate.m */,
 				95A99D0B1B21B55B005EDF41 /* GameScene.h */,
 				95A99D0C1B21B55B005EDF41 /* GameScene.m */,
+				95E37DAC1B22FA20007F993F /* MyUtils.h */,
 				95A99D101B21B55B005EDF41 /* GameViewController.h */,
 				95A99D111B21B55B005EDF41 /* GameViewController.m */,
 				95A99D131B21B55B005EDF41 /* Main.storyboard */,
@@ -458,6 +460,7 @@
 				95A99D2B1B21B55B005EDF41 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		95A99D2C1B21B55B005EDF41 /* Build configuration list for PBXNativeTarget "ZombieCongaTests" */ = {
 			isa = XCConfigurationList;
@@ -466,6 +469,7 @@
 				95A99D2E1B21B55B005EDF41 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
