@@ -78,6 +78,7 @@
     // NSLog(@"%f milliseconds since last update", self.dt * 1000);
     
     [self moveSprite:self.zombieNode withVelocity:self.velocity];
+    [self boundsCheckZombie];
 }
 
 #pragma mark - Custom Accessors
@@ -104,6 +105,32 @@
 }
 
 #pragma mark - Private
+
+- (void)boundsCheckZombie {
+    CGPoint bottomLeft = CGPointZero;
+    CGPoint topRight = CGPointMake(self.size.width, self.size.height);
+    
+    CGPoint newPosition = self.zombieNode.position;
+    CGPoint newVelociy = self.velocity;
+    
+    // Check x bounds
+    if (self.zombieNode.position.x <= bottomLeft.x) {
+        newVelociy.x = -newVelociy.x;
+    }
+    if (self.zombieNode.position.x >= topRight.x) {
+        newVelociy.x = -newVelociy.x;
+    }
+    // Check Y bounds
+    if (self.zombieNode.position.y <= bottomLeft.y) {
+        newVelociy.y = -newVelociy.y;
+    }
+    if (self.zombieNode.position.y >= topRight.y) {
+        newVelociy.y = -newVelociy.y;
+    }
+    
+    self.zombieNode.position = newPosition;
+    self.velocity = newVelociy;
+}
 
 // moveSprite: - Changes the current position of a sprite with a velocity vector-
 - (void)moveSprite:(SKSpriteNode *)sprite withVelocity:(CGPoint)velocity;
