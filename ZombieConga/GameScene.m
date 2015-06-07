@@ -90,6 +90,8 @@ static const CGFloat ZOMBIE_ROTATE_RADIANS_PER_SEC = 4.0 * M_PI;
     [self addChild:self.zombieNode];
     
     [self debugDrawPlayableArea];
+    
+    [self spawnEnemy];
 }
 
 - (void)update:(NSTimeInterval)currentTime {
@@ -135,9 +137,22 @@ static const CGFloat ZOMBIE_ROTATE_RADIANS_PER_SEC = 4.0 * M_PI;
 
 #pragma mark - Private
 
+- (void)spawnEnemy {
+    SKSpriteNode *enemy = [[SKSpriteNode alloc] initWithImageNamed:@"enemy"];
+    // Spawn middle right off screen
+    enemy.position = CGPointMake(self.size.width + enemy.size.width/2,
+                                 self.size.height/2);
+    [self addChild:enemy];
+    // Move to mid screen
+    SKAction *actionMidMove = [SKAction moveByX:-self.size.width/2-enemy.size.width/2 y:-CGRectGetHeight(self.playableRect)/2 + enemy.size.height/2 duration:1.0];
+    SKAction *actionMove = [SKAction moveByX:-self.size.width/2-enemy.size.width/2 y:CGRectGetHeight(self.playableRect)/2-enemy.size.height/2 duration:1.0];
+    
+    SKAction *sequence = [SKAction sequence:@[actionMidMove, actionMove]];
+    [enemy runAction:sequence];
+}
+
 // Check distance between last touch and position and stop moving when close
-- (void)distanceBetweenTouchCheckZombie
-{
+- (void)distanceBetweenTouchCheckZombie {
     CGPoint offset = CGPointSubtract(self.zombieNode.position, self.lastTouchLocation);
     if (CGPointLength(offset) <= self.zombieMovePointsPerSec*self.dt) {
         self.velocity = CGPointZero;
@@ -186,8 +201,7 @@ static const CGFloat ZOMBIE_ROTATE_RADIANS_PER_SEC = 4.0 * M_PI;
 }
 
 // moveSprite: - Changes the current position of a sprite with a velocity vector-
-- (void)moveSprite:(SKSpriteNode *)sprite withVelocity:(CGPoint)velocity;
-{
+- (void)moveSprite:(SKSpriteNode *)sprite withVelocity:(CGPoint)velocity {
 
     // Multiply intended velocity by time per frame to get distance
     CGPoint amountToMove = CGPointMultiplyScalar(velocity, self.dt);
@@ -212,8 +226,7 @@ static const CGFloat ZOMBIE_ROTATE_RADIANS_PER_SEC = 4.0 * M_PI;
     sprite.zRotation += ScalarSign(shortestAngleInRad) * amtToRotate;
 }
 
-- (void)sceneTouched:(CGPoint)touchLocation
-{
+- (void)sceneTouched:(CGPoint)touchLocation {
     [self moveZombieToward:touchLocation];
 }
 
