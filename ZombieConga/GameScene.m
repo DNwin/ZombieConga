@@ -137,6 +137,7 @@ static const CGFloat ZOMBIE_ROTATE_RADIANS_PER_SEC = 4.0 * M_PI;
 
 #pragma mark - Private
 
+// Spawns an enemy and moves it across the screen
 - (void)spawnEnemy {
     SKSpriteNode *enemy = [[SKSpriteNode alloc] initWithImageNamed:@"enemy"];
     // Spawn middle right off screen
@@ -144,11 +145,25 @@ static const CGFloat ZOMBIE_ROTATE_RADIANS_PER_SEC = 4.0 * M_PI;
                                  self.size.height/2);
     [self addChild:enemy];
     // Move to mid screen
-    SKAction *actionMidMove = [SKAction moveByX:-self.size.width/2-enemy.size.width/2 y:-CGRectGetHeight(self.playableRect)/2 + enemy.size.height/2 duration:1.0];
-    SKAction *actionMove = [SKAction moveByX:-self.size.width/2-enemy.size.width/2 y:CGRectGetHeight(self.playableRect)/2-enemy.size.height/2 duration:1.0];
+    SKAction *actionMidMove = [SKAction moveByX:-self.size.width/2-enemy.size.width/2
+                                              y:-CGRectGetHeight(self.playableRect)/2 + enemy.size.height/2
+                                       duration:1.0];
+    SKAction *actionMove = [SKAction moveByX:-self.size.width/2-enemy.size.width/2
+                                           y:CGRectGetHeight(self.playableRect)/2-enemy.size.height/2
+                                    duration:1.0];
+    SKAction *wait = [SKAction waitForDuration:0.25];
     
-    SKAction *sequence = [SKAction sequence:@[actionMidMove, actionMove]];
-    [enemy runAction:sequence];
+    void (^messageBlock)(void) = ^{ NSLog(@"Reached bottom"); };
+    SKAction *logMessage = [SKAction runBlock:messageBlock];
+
+    SKAction *halfSequence = [SKAction sequence:@[actionMidMove, logMessage, wait, actionMove]];
+    SKAction *sequence = [SKAction sequence:@[halfSequence, [halfSequence reversedAction]]];
+    
+    // Repeating sequence
+    SKAction *repeat = [SKAction repeatActionForever:sequence];
+    [enemy runAction:repeat];
+    
+    
 }
 
 // Check distance between last touch and position and stop moving when close
