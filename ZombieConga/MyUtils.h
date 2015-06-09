@@ -65,4 +65,21 @@ static inline CGFloat ScalarShortestAngleBetween(
     return angle;
 }
 
+// Random value beteween 0 and 1
+static inline CGFloat CGFloatRandom()
+{
+    float val = (float)(arc4random() % (unsigned)RAND_MAX + 1) / RAND_MAX;
+    NSLog(@"random small float %f", val);
+    return (CGFloat)val;
+
+}
+
+// Returns a random value in the range
+#define ARC4RANDOM_MAX      0x100000000
+static inline CGFloat CGFloatRandomRange(CGFloat min, CGFloat max)
+{
+    return floorf(((double)arc4random() / ARC4RANDOM_MAX) *
+                  (max - min) + min);
+}
+
 #endif

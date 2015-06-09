@@ -82,16 +82,20 @@ static const CGFloat ZOMBIE_ROTATE_RADIANS_PER_SEC = 4.0 * M_PI;
     // ** Rotation about z axis around anchor points
     // background.zRotation = M_PI/8;
 
-    // Add sprite node as a child
+    // Add background sprite node as a child
     [self addChild:background];
     
+    // DEBUG ** draws red rectangle around playable area
+    [self debugDrawPlayableArea];
+
     // Setup and add zombie node
     self.zombieNode.position = CGPointMake(400.0, 400.0);
     [self addChild:self.zombieNode];
     
-    [self debugDrawPlayableArea];
-    
-    [self spawnEnemy];
+    // Run spawnenemy infinitely
+    SKAction *sequence = [SKAction sequence:@[[SKAction performSelector:@selector(spawnEnemy) onTarget:self],
+                                              [SKAction waitForDuration:2.0]]];
+    [self runAction:[SKAction repeatActionForever:sequence]];
 }
 
 - (void)update:(NSTimeInterval)currentTime {
@@ -137,32 +141,20 @@ static const CGFloat ZOMBIE_ROTATE_RADIANS_PER_SEC = 4.0 * M_PI;
 
 #pragma mark - Private
 
-// Spawns an enemy and moves it across the screen
+// Spawns an enemy at random location and moves it across the screen
 - (void)spawnEnemy {
     SKSpriteNode *enemy = [[SKSpriteNode alloc] initWithImageNamed:@"enemy"];
-    // Spawn middle right off screen
-    enemy.position = CGPointMake(self.size.width + enemy.size.width/2,
-                                 self.size.height/2);
+    // Randomly position y
+    CGFloat randomFloatY = CGFloatRandomRange(CGRectGetMinY(self.playableRect) + enemy.size.height/2,
+                                      CGRectGetMaxY(self.playableRect) - enemy.size.height/2);
+    NSLog(@"Random float: %f", randomFloatY);
+    enemy.position = CGPointMake(self.size.width + enemy.size.width/2, randomFloatY);
+    
     [self addChild:enemy];
-    // Move to mid screen
-    SKAction *actionMidMove = [SKAction moveByX:-self.size.width/2-enemy.size.width/2
-                                              y:-CGRectGetHeight(self.playableRect)/2 + enemy.size.height/2
-                                       duration:1.0];
-    SKAction *actionMove = [SKAction moveByX:-self.size.width/2-enemy.size.width/2
-                                           y:CGRectGetHeight(self.playableRect)/2-enemy.size.height/2
-                                    duration:1.0];
-    SKAction *wait = [SKAction waitForDuration:0.25];
-    
-    void (^messageBlock)(void) = ^{ NSLog(@"Reached bottom"); };
-    SKAction *logMessage = [SKAction runBlock:messageBlock];
-
-    SKAction *halfSequence = [SKAction sequence:@[actionMidMove, logMessage, wait, actionMove]];
-    SKAction *sequence = [SKAction sequence:@[halfSequence, [halfSequence reversedAction]]];
-    
-    // Repeating sequence
-    SKAction *repeat = [SKAction repeatActionForever:sequence];
-    [enemy runAction:repeat];
-    
+    SKAction *actionMove = [SKAction moveToX:-enemy.size.width/2 duration:2.0];
+    // Remove node
+    SKAction *actionRemove = [SKAction removeFromParent];
+    [enemy runAction:[SKAction sequence:@[actionMove, actionRemove]]];
     
 }
 
