@@ -95,6 +95,11 @@ static const CGFloat ZOMBIE_ROTATE_RADIANS_PER_SEC = 4.0 * M_PI;
     SKAction *sequence = [SKAction sequence:@[[SKAction performSelector:@selector(spawnEnemy) onTarget:self],
                                               [SKAction waitForDuration:2.0]]];
     [self runAction:[SKAction repeatActionForever:sequence]];
+    
+    // Spawn cats infinitely
+    [self runAction:[SKAction repeatActionForever:
+                     [SKAction sequence:@[[SKAction performSelector:@selector(spawnCat) onTarget:self],
+                                          [SKAction waitForDuration:1.0]]]]];
 }
 
 - (void)update:(NSTimeInterval)currentTime {
@@ -200,6 +205,38 @@ static const CGFloat ZOMBIE_ROTATE_RADIANS_PER_SEC = 4.0 * M_PI;
     [self.zombieNode removeActionForKey:@"animation"];
 }
 
+- (void)spawnCat {
+    SKSpriteNode *cat = [[SKSpriteNode alloc] initWithImageNamed:@"cat"];
+    cat.position = CGPointMake(CGFloatRandomRange(CGRectGetMinX(self.playableRect),
+                                                  CGRectGetMaxX(self.playableRect)),
+                               CGFloatRandomRange(CGRectGetMinY(self.playableRect),
+                                                  CGRectGetMaxX(self.playableRect)));
+    [cat setScale:0]; // Basically invisible
+    [self addChild:cat];
+    
+    // Show cat
+    SKAction *appear = [SKAction scaleTo:1.0 duration:0.5];
+    
+    // Cat wiggle for 10 seconds (0.5s / wiggle * 10)
+    cat.zRotation = -M_PI / 16.0;
+    SKAction *leftWiggle = [SKAction rotateByAngle:M_PI / 8 duration:0.5];
+    SKAction *rightWiggle = [leftWiggle reversedAction];
+    SKAction *fullWiggle = [SKAction sequence:@[leftWiggle, rightWiggle]]; // 1s
+
+    // Slight scaling with siggle
+    SKAction *scaleUp = [SKAction scaleBy:1.2 duration:0.25];
+    SKAction *scaleDown = [scaleUp reversedAction];
+    SKAction *fullScale = [SKAction sequence:
+                           @[scaleUp, scaleDown, scaleUp, scaleDown]];
+    
+    SKAction *group = [SKAction group:@[fullWiggle, fullScale]]; // 1s
+    SKAction *groupWait = [SKAction repeatAction:group count:10]; // 10s
+    SKAction *dissapear = [SKAction scaleTo:0 duration:0.5]; // Hide after 10 seconds
+    SKAction *removeFromParent = [SKAction removeFromParent]; // Rem node
+    
+    NSArray *actions = @[appear, groupWait, dissapear, removeFromParent];
+    [cat runAction:[SKAction sequence:actions]];
+}
 
 #pragma mark - Private
 
