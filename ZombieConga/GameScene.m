@@ -23,6 +23,8 @@ static const CGFloat ZOMBIE_ROTATE_RADIANS_PER_SEC = 4.0 * M_PI;
 @property (nonatomic) CGRect playableRect; // Playable rectangle
 @property (nonatomic) CGPoint lastTouchLocation; // Last location touched
 
+@property (strong, nonatomic) SKAction *zombieAnimation; // Animation action
+
 @end;
 
 
@@ -48,6 +50,17 @@ static const CGFloat ZOMBIE_ROTATE_RADIANS_PER_SEC = 4.0 * M_PI;
         CGFloat playableMargin = (self.size.height - playableHeight)/2.0;
         self.playableRect = CGRectMake(0, playableMargin,
                                        self.size.width, playableHeight);
+        // zombieAnimation
+        NSMutableArray *textures = [[NSMutableArray alloc] init];
+        // Add zombie1..4 to array, then 3, 2 (Frames: 1,2,3,4,3,2)
+        for (int i = 1; i <= 4; i++) {
+            NSString *textureName = [[NSString alloc] initWithFormat:@"zombie%i",i];
+            [textures addObject: [SKTexture textureWithImageNamed:textureName]];
+        }
+        [textures addObject:textures[2]];
+        [textures addObject:textures[1]];
+        _zombieAnimation = [SKAction animateWithTextures:textures timePerFrame:0.1];
+        
         
     }
     return self;
@@ -63,26 +76,11 @@ static const CGFloat ZOMBIE_ROTATE_RADIANS_PER_SEC = 4.0 * M_PI;
 - (void) didMoveToView:(SKView *)view {
     self.backgroundColor = [SKColor whiteColor];
     
-    // Make background sprite node
     SKSpriteNode *background = [[SKSpriteNode alloc] initWithImageNamed:@"background1"];
-    
     // Set background position using the size of the view
-    // X, Y positions in Sprite Kit start in bottom left
-    // Default anchor point is middle of picture CGPoint 0.5, 0.5
     background.position = CGPointMake(self.size.width/2, self.size.height/2);
-    background.anchorPoint = CGPointMake(0.5, 0.5);
     // Set z position to prevent nodes from spawning under background
     background.zPosition = -1;
-
-    
-    //  ** Change anchor to bottom left
-    // background.anchorPoint = CGPointZero;
-    // background.position = CGPointZero;
-    
-    // ** Rotation about z axis around anchor points
-    // background.zRotation = M_PI/8;
-
-    // Add background sprite node as a child
     [self addChild:background];
     
     // DEBUG ** draws red rectangle around playable area
@@ -91,6 +89,7 @@ static const CGFloat ZOMBIE_ROTATE_RADIANS_PER_SEC = 4.0 * M_PI;
     // Setup and add zombie node
     self.zombieNode.position = CGPointMake(400.0, 400.0);
     [self addChild:self.zombieNode];
+    // [self.zombieNode runAction:[SKAction repeatActionForever:self.zombieAnimation]];
     
     // Run spawnenemy infinitely
     SKAction *sequence = [SKAction sequence:@[[SKAction performSelector:@selector(spawnEnemy) onTarget:self],
@@ -113,7 +112,6 @@ static const CGFloat ZOMBIE_ROTATE_RADIANS_PER_SEC = 4.0 * M_PI;
     [self rotateSprite:self.zombieNode toFace:self.velocity rotationSpeed:ZOMBIE_ROTATE_RADIANS_PER_SEC];
     [self distanceBetweenTouchCheckZombie];
     
-
 }
 
 #pragma mark - Custom Accessors
@@ -139,14 +137,14 @@ static const CGFloat ZOMBIE_ROTATE_RADIANS_PER_SEC = 4.0 * M_PI;
     [self sceneTouched:touchLocation];
 }
 
-#pragma mark - Private
+#pragma mark - Sprites and movement
 
 // Spawns an enemy at random location and moves it across the screen
 - (void)spawnEnemy {
     SKSpriteNode *enemy = [[SKSpriteNode alloc] initWithImageNamed:@"enemy"];
     // Randomly position y
     CGFloat randomFloatY = CGFloatRandomRange(CGRectGetMinY(self.playableRect) + enemy.size.height/2,
-                                      CGRectGetMaxY(self.playableRect) - enemy.size.height/2);
+                                              CGRectGetMaxY(self.playableRect) - enemy.size.height/2);
     NSLog(@"Random float: %f", randomFloatY);
     enemy.position = CGPointMake(self.size.width + enemy.size.width/2, randomFloatY);
     
@@ -158,11 +156,62 @@ static const CGFloat ZOMBIE_ROTATE_RADIANS_PER_SEC = 4.0 * M_PI;
     
 }
 
+// moveSprite: - Changes the current position of a sprite with a velocity vector-
+- (void)moveSprite:(SKSpriteNode *)sprite withVelocity:(CGPoint)velocity {
+    
+    // Multiply intended velocity by time per frame to get distance
+    CGPoint amountToMove = CGPointMultiplyScalar(velocity, self.dt);
+    
+    //NSLog(@"Amount to move: %f", hypot(amountToMove.x, amountToMove.y));
+    
+    // Update position of sprite
+    sprite.position = CGPointAdd(sprite.position, amountToMove);
+}
+
+// moveZombieTowards: - Takes in a location and sets the velocity property
+- (void)moveZombieToward:(CGPoint)location {
+    
+    // Start animation
+    [self startZombieAnimation];
+    
+    self.lastTouchLocation = location;
+    
+    CGPoint offsetVector = CGPointMake(location.x - self.zombieNode.position.x,
+                                       location.y - self.zombieNode.position.y);
+    // Get length of offset vector
+    CGFloat offsetLength = hypot(offsetVector.x, offsetVector.y);
+    // Convert offset vector to unit vector that points towards location
+    CGPoint unitVector = CGPointMake(offsetVector.x/offsetLength,
+                                     offsetVector.y/offsetLength);
+    // Mult unit vector by default velocity value, set the velocity property
+    self.velocity = CGPointMake(unitVector.x * self.zombieMovePointsPerSec,
+                                unitVector.y * self.zombieMovePointsPerSec);
+}
+
+- (void)startZombieAnimation {
+    if ([self.zombieNode actionForKey:@"animation"] == nil) {
+        [self.zombieNode runAction:[SKAction repeatActionForever:self.zombieAnimation]
+                           withKey:@"animation"];
+         }
+}
+
+// Stop infinite animation loop by removing key
+- (void)stopZombieAnimation {
+    [self.zombieNode removeActionForKey:@"animation"];
+}
+
+
+#pragma mark - Private
+
+
+
 // Check distance between last touch and position and stop moving when close
 - (void)distanceBetweenTouchCheckZombie {
     CGPoint offset = CGPointSubtract(self.zombieNode.position, self.lastTouchLocation);
     if (CGPointLength(offset) <= self.zombieMovePointsPerSec*self.dt) {
         self.velocity = CGPointZero;
+        // Stop animation
+        [self stopZombieAnimation];
     }
 }
 
@@ -207,17 +256,7 @@ static const CGFloat ZOMBIE_ROTATE_RADIANS_PER_SEC = 4.0 * M_PI;
     self.velocity = newVelociy;
 }
 
-// moveSprite: - Changes the current position of a sprite with a velocity vector-
-- (void)moveSprite:(SKSpriteNode *)sprite withVelocity:(CGPoint)velocity {
 
-    // Multiply intended velocity by time per frame to get distance
-    CGPoint amountToMove = CGPointMultiplyScalar(velocity, self.dt);
-    
-    //NSLog(@"Amount to move: %f", hypot(amountToMove.x, amountToMove.y));
-    
-    // Update position of sprite
-    sprite.position = CGPointAdd(sprite.position, amountToMove);
-}
 
 // Rotates a sprite with a rotation speed towards a direction vector
 - (void)rotateSprite:(SKSpriteNode *)sprite
@@ -235,23 +274,6 @@ static const CGFloat ZOMBIE_ROTATE_RADIANS_PER_SEC = 4.0 * M_PI;
 
 - (void)sceneTouched:(CGPoint)touchLocation {
     [self moveZombieToward:touchLocation];
-}
-
-// moveZombieTowards: - Takes in a location and sets the velocity property
-- (void)moveZombieToward:(CGPoint)location {
-    
-    self.lastTouchLocation = location;
-    
-    CGPoint offsetVector = CGPointMake(location.x - self.zombieNode.position.x,
-                                 location.y - self.zombieNode.position.y);
-    // Get length of offset vector
-    CGFloat offsetLength = hypot(offsetVector.x, offsetVector.y);
-    // Convert offset vector to unit vector that points towards location
-    CGPoint unitVector = CGPointMake(offsetVector.x/offsetLength,
-                                     offsetVector.y/offsetLength);
-    // Mult unit vector by default velocity value, set the velocity property
-    self.velocity = CGPointMake(unitVector.x * self.zombieMovePointsPerSec,
-                                         unitVector.y * self.zombieMovePointsPerSec);
 }
 
 
