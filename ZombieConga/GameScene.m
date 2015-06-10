@@ -12,6 +12,7 @@
 
 static const CGFloat ZOMBIE_ROTATE_RADIANS_PER_SEC = 4.0 * M_PI;
 #define DEFAULT_MOVE_POINTS_VALUE 480.0
+static const CGFloat CAT_MOVE_POINTS_PER_SEC = DEFAULT_MOVE_POINTS_VALUE;
 
 @interface GameScene()
 
@@ -94,6 +95,7 @@ static const CGFloat ZOMBIE_ROTATE_RADIANS_PER_SEC = 4.0 * M_PI;
     [self debugDrawPlayableArea];
 
     // Setup and add zombie node
+    self.zombieNode.zPosition = 100; // Zombie on top
     self.zombieNode.position = CGPointMake(400.0, 400.0);
     [self addChild:self.zombieNode];
     // [self.zombieNode runAction:[SKAction repeatActionForever:self.zombieAnimation]];
@@ -123,6 +125,7 @@ static const CGFloat ZOMBIE_ROTATE_RADIANS_PER_SEC = 4.0 * M_PI;
     [self boundsCheckZombie];
     [self rotateSprite:self.zombieNode toFace:self.velocity rotationSpeed:ZOMBIE_ROTATE_RADIANS_PER_SEC];
     [self distanceBetweenTouchCheckZombie];
+    [self moveTrain]; // Checks for train cats and follows
 }
 
 // Executed after SKScene evals actions after update:
@@ -299,11 +302,41 @@ static const CGFloat ZOMBIE_ROTATE_RADIANS_PER_SEC = 4.0 * M_PI;
 }
 
 // Remove specific cat node from parent
-- (void)zombieHitCat:(SKSpriteNode *) cat {
+- (void)zombieHitCat:(SKSpriteNode *)cat {
     [self runAction:self.catCollisionSound];
-    [cat removeFromParent];
+    // Make cat follow
+    cat.name = @"train";
+    // Remove wiggle and make cat normal
+    [cat removeAllActions];
+    cat.zRotation = 0;
+    [cat setScale: 1];
+    // turn cat Green
+    SKAction *turnGreen = [SKAction colorizeWithColor:[UIColor greenColor] colorBlendFactor:1.0 duration:0.2];
+    [cat runAction:turnGreen];
 }
 
+// Runs every update: to make cat follow the zombie
+- (void)moveTrain {
+    __block CGPoint targetPosition = self.zombieNode.position;
+    
+    [self enumerateChildNodesWithName:@"train"
+                           usingBlock:^(SKNode *node, BOOL *stop) {
+                               if (![node hasActions]) {
+                                   // Follow zombie over 0.3 s
+                                   CGFloat actionDuration = 0.3;
+                                   CGPoint offset = CGPointSubtract(targetPosition, node.position);
+                                   CGPoint direction = CGPointNormalize(offset);
+                                   CGPoint amountToMovePerSec = CGPointMultiplyScalar(direction, CAT_MOVE_POINTS_PER_SEC);
+                                   CGPoint amountToMove = CGPointMultiplyScalar(amountToMovePerSec, actionDuration);
+                                   SKAction *moveAction = [SKAction moveByX:amountToMove.x
+                                                   y:amountToMove.y duration:actionDuration];
+                                   [node runAction:moveAction];
+                               }
+        // Make new target position the latest cat added
+        // Make latest node follow last node
+        targetPosition = node.position;
+    }];
+}
 // Remove current enemy from node
 - (void)zombieHitEnemy:(SKSpriteNode *)enemy {
     [self runAction:self.enemyCollisionSound];
@@ -323,7 +356,6 @@ static const CGFloat ZOMBIE_ROTATE_RADIANS_PER_SEC = 4.0 * M_PI;
         
     }]]];
     [self.zombieNode runAction:sequence];
-    [enemy removeFromParent];
 }
 
 #pragma mark Private
