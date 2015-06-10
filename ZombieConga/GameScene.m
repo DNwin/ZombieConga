@@ -26,6 +26,7 @@ static const CGFloat ZOMBIE_ROTATE_RADIANS_PER_SEC = 4.0 * M_PI;
 @property (strong, nonatomic) SKAction *zombieAnimation; // Animation action
 @property (strong, nonatomic) SKAction *catCollisionSound; // Sound of cat
 @property (strong, nonatomic) SKAction *enemyCollisionSound; // Sound of enemy
+@property (nonatomic, getter=isZombieInvincible) BOOL zombieInvincible;
 
 @end;
 
@@ -67,7 +68,7 @@ static const CGFloat ZOMBIE_ROTATE_RADIANS_PER_SEC = 4.0 * M_PI;
         _catCollisionSound = [SKAction playSoundFileNamed:@"hitCat.wav" waitForCompletion:YES];
         _enemyCollisionSound = [SKAction playSoundFileNamed:@"hitCatLady.wav" waitForCompletion:YES];
         
-        
+        _zombieInvincible = NO;
     }
     return self;
 }
@@ -282,16 +283,18 @@ static const CGFloat ZOMBIE_ROTATE_RADIANS_PER_SEC = 4.0 * M_PI;
     }
     
     // Do same for enemy collision
-    NSMutableArray *hitEnemies = [[NSMutableArray alloc] init];
-    [self enumerateChildNodesWithName:@"enemy" usingBlock:^(SKNode *node, BOOL *stop) {
-        SKSpriteNode *enemy = (SKSpriteNode *)node;
-        if (CGRectIntersectsRect(CGRectInset(node.frame, 20, 20), self.zombieNode.frame)) {
+    if (!self.isZombieInvincible) {
+        NSMutableArray *hitEnemies = [[NSMutableArray alloc] init];
+        [self enumerateChildNodesWithName:@"enemy" usingBlock:^(SKNode *node, BOOL *stop) {
+            SKSpriteNode *enemy = (SKSpriteNode *)node;
+            if (CGRectIntersectsRect(CGRectInset(node.frame, 20, 20), self.zombieNode.frame)) {
             [hitEnemies addObject:enemy];
-        }
-    }];
+            }
+        }];
     
-    for (SKSpriteNode *enemy in hitEnemies) {
-        [self zombieHitEnemy:enemy];
+        for (SKSpriteNode *enemy in hitEnemies) {
+            [self zombieHitEnemy:enemy];
+        }
     }
 }
 
@@ -304,6 +307,22 @@ static const CGFloat ZOMBIE_ROTATE_RADIANS_PER_SEC = 4.0 * M_PI;
 // Remove current enemy from node
 - (void)zombieHitEnemy:(SKSpriteNode *)enemy {
     [self runAction:self.enemyCollisionSound];
+    self.zombieInvincible = YES;
+    // Blink zombie after hit using hidden property
+    CGFloat duration = 3.0;
+    CGFloat blinkTimes = 10.0;
+    SKAction *blinkAction = [SKAction customActionWithDuration:duration actionBlock:^(SKNode *node, CGFloat elapsedTime) {
+        CGFloat slice = duration / blinkTimes;
+        CGFloat remainder = fmod(elapsedTime, slice);
+        node.hidden = remainder > slice / 2;
+    }];
+    
+    SKAction *sequence = [SKAction sequence:@[blinkAction, [SKAction runBlock:^{
+        self.zombieNode.hidden = NO;
+        self.zombieInvincible = NO;
+        
+    }]]];
+    [self.zombieNode runAction:sequence];
     [enemy removeFromParent];
 }
 
