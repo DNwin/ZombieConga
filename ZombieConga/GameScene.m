@@ -24,6 +24,8 @@ static const CGFloat ZOMBIE_ROTATE_RADIANS_PER_SEC = 4.0 * M_PI;
 @property (nonatomic) CGPoint lastTouchLocation; // Last location touched
 
 @property (strong, nonatomic) SKAction *zombieAnimation; // Animation action
+@property (strong, nonatomic) SKAction *catCollisionSound; // Sound of cat
+@property (strong, nonatomic) SKAction *enemyCollisionSound; // Sound of enemy
 
 @end;
 
@@ -60,6 +62,10 @@ static const CGFloat ZOMBIE_ROTATE_RADIANS_PER_SEC = 4.0 * M_PI;
         [textures addObject:textures[2]];
         [textures addObject:textures[1]];
         _zombieAnimation = [SKAction animateWithTextures:textures timePerFrame:0.1];
+        
+        // Sounds
+        _catCollisionSound = [SKAction playSoundFileNamed:@"hitCat.wav" waitForCompletion:YES];
+        _enemyCollisionSound = [SKAction playSoundFileNamed:@"hitCatLady.wav" waitForCompletion:YES];
         
         
     }
@@ -116,7 +122,11 @@ static const CGFloat ZOMBIE_ROTATE_RADIANS_PER_SEC = 4.0 * M_PI;
     [self boundsCheckZombie];
     [self rotateSprite:self.zombieNode toFace:self.velocity rotationSpeed:ZOMBIE_ROTATE_RADIANS_PER_SEC];
     [self distanceBetweenTouchCheckZombie];
-    
+}
+
+// Executed after SKScene evals actions after update:
+- (void)didEvaluateActions {
+    [self checkCollisions];
 }
 
 #pragma mark - Custom Accessors
@@ -212,7 +222,7 @@ static const CGFloat ZOMBIE_ROTATE_RADIANS_PER_SEC = 4.0 * M_PI;
     cat.position = CGPointMake(CGFloatRandomRange(CGRectGetMinX(self.playableRect),
                                                   CGRectGetMaxX(self.playableRect)),
                                CGFloatRandomRange(CGRectGetMinY(self.playableRect),
-                                                  CGRectGetMaxX(self.playableRect)));
+                                                  CGRectGetMaxY(self.playableRect)));
     [cat setScale:0]; // Basically invisible
     [self addChild:cat];
     
@@ -254,12 +264,48 @@ static const CGFloat ZOMBIE_ROTATE_RADIANS_PER_SEC = 4.0 * M_PI;
     }
 }
 
-// Takes a cat as an argument and removes it as a parent when cat collides with zom
+// Enumerates through enemy/cat nodes for collision with zombie
+- (void)checkCollisions {
+    NSMutableArray *hitCats = [[NSMutableArray alloc] init];
+    
+    // Go through all cats and check intersection, add the cat to array
+    [self enumerateChildNodesWithName:@"cat"
+                           usingBlock:^(SKNode *node, BOOL *stop) {
+        SKSpriteNode *cat = (SKSpriteNode *)node;
+        if (CGRectIntersectsRect(cat.frame, self.zombieNode.frame)) {
+            [hitCats addObject: cat];
+        }
+    }];
+    
+    for (SKSpriteNode *cat in hitCats) {
+        [self zombieHitCat:cat];
+    }
+    
+    // Do same for enemy collision
+    NSMutableArray *hitEnemies = [[NSMutableArray alloc] init];
+    [self enumerateChildNodesWithName:@"enemy" usingBlock:^(SKNode *node, BOOL *stop) {
+        SKSpriteNode *enemy = (SKSpriteNode *)node;
+        if (CGRectIntersectsRect(CGRectInset(node.frame, 20, 20), self.zombieNode.frame)) {
+            [hitEnemies addObject:enemy];
+        }
+    }];
+    
+    for (SKSpriteNode *enemy in hitEnemies) {
+        [self zombieHitEnemy:enemy];
+    }
+}
+
+// Remove specific cat node from parent
 - (void)zombieHitCat:(SKSpriteNode *) cat {
+    [self runAction:self.catCollisionSound];
     [cat removeFromParent];
 }
 
-
+// Remove current enemy from node
+- (void)zombieHitEnemy:(SKSpriteNode *)enemy {
+    [self runAction:self.enemyCollisionSound];
+    [enemy removeFromParent];
+}
 
 #pragma mark Private
 

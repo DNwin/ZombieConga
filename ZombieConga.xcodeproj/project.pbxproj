@@ -7,6 +7,11 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		9556E2041B28292A00BB95B5 /* backgroundMusic.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 9556E1FF1B28292A00BB95B5 /* backgroundMusic.mp3 */; };
+		9556E2051B28292A00BB95B5 /* hitCat.wav in Resources */ = {isa = PBXBuildFile; fileRef = 9556E2001B28292A00BB95B5 /* hitCat.wav */; };
+		9556E2061B28292A00BB95B5 /* hitCatLady.wav in Resources */ = {isa = PBXBuildFile; fileRef = 9556E2011B28292A00BB95B5 /* hitCatLady.wav */; };
+		9556E2071B28292A00BB95B5 /* lose.wav in Resources */ = {isa = PBXBuildFile; fileRef = 9556E2021B28292A00BB95B5 /* lose.wav */; };
+		9556E2081B28292A00BB95B5 /* win.wav in Resources */ = {isa = PBXBuildFile; fileRef = 9556E2031B28292A00BB95B5 /* win.wav */; };
 		95A99D071B21B55B005EDF41 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 95A99D061B21B55B005EDF41 /* main.m */; };
 		95A99D0A1B21B55B005EDF41 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 95A99D091B21B55B005EDF41 /* AppDelegate.m */; };
 		95A99D0D1B21B55B005EDF41 /* GameScene.m in Sources */ = {isa = PBXBuildFile; fileRef = 95A99D0C1B21B55B005EDF41 /* GameScene.m */; };
@@ -34,6 +39,11 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		9556E1FF1B28292A00BB95B5 /* backgroundMusic.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = backgroundMusic.mp3; sourceTree = "<group>"; };
+		9556E2001B28292A00BB95B5 /* hitCat.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = hitCat.wav; sourceTree = "<group>"; };
+		9556E2011B28292A00BB95B5 /* hitCatLady.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = hitCatLady.wav; sourceTree = "<group>"; };
+		9556E2021B28292A00BB95B5 /* lose.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = lose.wav; sourceTree = "<group>"; };
+		9556E2031B28292A00BB95B5 /* win.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = win.wav; sourceTree = "<group>"; };
 		95A99D011B21B55B005EDF41 /* ZombieConga.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ZombieConga.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		95A99D051B21B55B005EDF41 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		95A99D061B21B55B005EDF41 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
@@ -76,6 +86,18 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		9556E1FE1B28292A00BB95B5 /* Sounds */ = {
+			isa = PBXGroup;
+			children = (
+				9556E1FF1B28292A00BB95B5 /* backgroundMusic.mp3 */,
+				9556E2001B28292A00BB95B5 /* hitCat.wav */,
+				9556E2011B28292A00BB95B5 /* hitCatLady.wav */,
+				9556E2021B28292A00BB95B5 /* lose.wav */,
+				9556E2031B28292A00BB95B5 /* win.wav */,
+			);
+			path = Sounds;
+			sourceTree = "<group>";
+		};
 		95A99CF81B21B55B005EDF41 = {
 			isa = PBXGroup;
 			children = (
@@ -97,6 +119,7 @@
 		95A99D031B21B55B005EDF41 /* ZombieConga */ = {
 			isa = PBXGroup;
 			children = (
+				9556E1FE1B28292A00BB95B5 /* Sounds */,
 				95A99D3A1B21BC69005EDF41 /* sprites.atlas */,
 				95A99D2F1B21BC5F005EDF41 /* Images */,
 				95A99D081B21B55B005EDF41 /* AppDelegate.h */,
@@ -236,10 +259,15 @@
 				95A99D3B1B21BC69005EDF41 /* sprites.atlas in Resources */,
 				95A99D1A1B21B55B005EDF41 /* LaunchScreen.xib in Resources */,
 				95A99D371B21BC5F005EDF41 /* MainMenu.png in Resources */,
+				9556E2071B28292A00BB95B5 /* lose.wav in Resources */,
 				95A99D381B21BC5F005EDF41 /* YouLose.png in Resources */,
 				95A99D171B21B55B005EDF41 /* Images.xcassets in Resources */,
+				9556E2081B28292A00BB95B5 /* win.wav in Resources */,
 				95A99D361B21BC5F005EDF41 /* background2.png in Resources */,
 				95A99D151B21B55B005EDF41 /* Main.storyboard in Resources */,
+				9556E2041B28292A00BB95B5 /* backgroundMusic.mp3 in Resources */,
+				9556E2061B28292A00BB95B5 /* hitCatLady.wav in Resources */,
+				9556E2051B28292A00BB95B5 /* hitCat.wav in Resources */,
 				95A99D351B21BC5F005EDF41 /* background1.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
