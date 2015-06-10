@@ -147,6 +147,7 @@ static const CGFloat ZOMBIE_ROTATE_RADIANS_PER_SEC = 4.0 * M_PI;
 // Spawns an enemy at random location and moves it across the screen
 - (void)spawnEnemy {
     SKSpriteNode *enemy = [[SKSpriteNode alloc] initWithImageNamed:@"enemy"];
+    enemy.name = @"enemy";
     // Randomly position y
     CGFloat randomFloatY = CGFloatRandomRange(CGRectGetMinY(self.playableRect) + enemy.size.height/2,
                                               CGRectGetMaxY(self.playableRect) - enemy.size.height/2);
@@ -207,6 +208,7 @@ static const CGFloat ZOMBIE_ROTATE_RADIANS_PER_SEC = 4.0 * M_PI;
 
 - (void)spawnCat {
     SKSpriteNode *cat = [[SKSpriteNode alloc] initWithImageNamed:@"cat"];
+    cat.name = @"cat";
     cat.position = CGPointMake(CGFloatRandomRange(CGRectGetMinX(self.playableRect),
                                                   CGRectGetMaxX(self.playableRect)),
                                CGFloatRandomRange(CGRectGetMinY(self.playableRect),
@@ -238,8 +240,8 @@ static const CGFloat ZOMBIE_ROTATE_RADIANS_PER_SEC = 4.0 * M_PI;
     [cat runAction:[SKAction sequence:actions]];
 }
 
-#pragma mark - Private
 
+#pragma mark Collision
 
 
 // Check distance between last touch and position and stop moving when close
@@ -251,6 +253,15 @@ static const CGFloat ZOMBIE_ROTATE_RADIANS_PER_SEC = 4.0 * M_PI;
         [self stopZombieAnimation];
     }
 }
+
+// Takes a cat as an argument and removes it as a parent when cat collides with zom
+- (void)zombieHitCat:(SKSpriteNode *) cat {
+    [cat removeFromParent];
+}
+
+
+
+#pragma mark Private
 
 - (void)debugDrawPlayableArea {
     SKShapeNode *shape = [[SKShapeNode alloc] init];
