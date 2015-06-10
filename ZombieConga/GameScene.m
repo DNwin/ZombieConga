@@ -6,6 +6,7 @@
 //  Copyright (c) 2015 dnwin. All rights reserved.
 //
 
+#import <AVFoundation/AVFoundation.h>
 #import "GameScene.h"
 #import "MyUtils.h"
 #import "GameOverScene.h"
@@ -17,6 +18,7 @@ static const CGFloat CAT_MOVE_POINTS_PER_SEC = DEFAULT_MOVE_POINTS_VALUE;
 
 @interface GameScene()
 
+@property (strong, nonatomic) AVAudioPlayer *backgroundMusicPlayer;
 @property (strong, nonatomic) SKSpriteNode *zombieNode; // zombie node;
 @property (nonatomic) NSTimeInterval lastUpdateTime;
 @property (nonatomic) NSTimeInterval dt; // Time per frame in ms
@@ -88,6 +90,7 @@ static const CGFloat CAT_MOVE_POINTS_PER_SEC = DEFAULT_MOVE_POINTS_VALUE;
 
 - (void) didMoveToView:(SKView *)view {
     self.backgroundColor = [SKColor whiteColor];
+    [self playBackgroundMusicWithFilname:@"backgroundMusic.mp3"];
     
     SKSpriteNode *background = [[SKSpriteNode alloc] initWithImageNamed:@"background1"];
     // Set background position using the size of the view
@@ -402,6 +405,25 @@ static const CGFloat CAT_MOVE_POINTS_PER_SEC = DEFAULT_MOVE_POINTS_VALUE;
 
 #pragma mark Private
 
+- (void)playBackgroundMusicWithFilname:(NSString *)filename {
+    NSURL *url = [[NSBundle mainBundle] URLForResource:filename withExtension:nil];
+    if (url == nil) {
+        NSLog(@"Could not find file");
+        return;
+    }
+    
+    NSError *error = [[NSError alloc] init];
+    self.backgroundMusicPlayer = [[AVAudioPlayer alloc] initWithContentsOfURL:url error:&error];
+    if (self.backgroundMusicPlayer == nil) {
+        NSLog(@"Could not create music player: %@", error);
+        return;
+    }
+    
+    self.backgroundMusicPlayer.numberOfLoops = -1;
+    [self.backgroundMusicPlayer prepareToPlay];
+    [self.backgroundMusicPlayer play];
+    
+}
 - (void)debugDrawPlayableArea {
     SKShapeNode *shape = [[SKShapeNode alloc] init];
     // Configure path
@@ -466,6 +488,7 @@ static const CGFloat CAT_MOVE_POINTS_PER_SEC = DEFAULT_MOVE_POINTS_VALUE;
 #pragma mark Scene Transition
 - (void)presentGameOverScreenDidWin:(BOOL)won
 {
+    [self.backgroundMusicPlayer stop];
     GameOverScene *gameOverScene = [[GameOverScene alloc]
                                     initWithSize:self.size isWon:won];
     SKTransition *reveal = [SKTransition flipHorizontalWithDuration:0.5];
