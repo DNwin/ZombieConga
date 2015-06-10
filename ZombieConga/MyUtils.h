@@ -69,7 +69,6 @@ static inline CGFloat ScalarShortestAngleBetween(
 static inline CGFloat CGFloatRandom()
 {
     float val = (float)(arc4random() % (unsigned)RAND_MAX + 1) / RAND_MAX;
-    NSLog(@"random small float %f", val);
     return (CGFloat)val;
 
 }

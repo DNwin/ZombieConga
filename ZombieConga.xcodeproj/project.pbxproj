@@ -12,6 +12,7 @@
 		9556E2061B28292A00BB95B5 /* hitCatLady.wav in Resources */ = {isa = PBXBuildFile; fileRef = 9556E2011B28292A00BB95B5 /* hitCatLady.wav */; };
 		9556E2071B28292A00BB95B5 /* lose.wav in Resources */ = {isa = PBXBuildFile; fileRef = 9556E2021B28292A00BB95B5 /* lose.wav */; };
 		9556E2081B28292A00BB95B5 /* win.wav in Resources */ = {isa = PBXBuildFile; fileRef = 9556E2031B28292A00BB95B5 /* win.wav */; };
+		9556E20C1B285BAF00BB95B5 /* GameOverScene.m in Sources */ = {isa = PBXBuildFile; fileRef = 9556E20B1B285BAF00BB95B5 /* GameOverScene.m */; };
 		95A99D071B21B55B005EDF41 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 95A99D061B21B55B005EDF41 /* main.m */; };
 		95A99D0A1B21B55B005EDF41 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 95A99D091B21B55B005EDF41 /* AppDelegate.m */; };
 		95A99D0D1B21B55B005EDF41 /* GameScene.m in Sources */ = {isa = PBXBuildFile; fileRef = 95A99D0C1B21B55B005EDF41 /* GameScene.m */; };
@@ -44,6 +45,8 @@
 		9556E2011B28292A00BB95B5 /* hitCatLady.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = hitCatLady.wav; sourceTree = "<group>"; };
 		9556E2021B28292A00BB95B5 /* lose.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = lose.wav; sourceTree = "<group>"; };
 		9556E2031B28292A00BB95B5 /* win.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = win.wav; sourceTree = "<group>"; };
+		9556E20A1B285BAF00BB95B5 /* GameOverScene.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GameOverScene.h; sourceTree = "<group>"; };
+		9556E20B1B285BAF00BB95B5 /* GameOverScene.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GameOverScene.m; sourceTree = "<group>"; };
 		95A99D011B21B55B005EDF41 /* ZombieConga.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ZombieConga.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		95A99D051B21B55B005EDF41 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		95A99D061B21B55B005EDF41 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
@@ -127,6 +130,8 @@
 				95A99D0B1B21B55B005EDF41 /* GameScene.h */,
 				95A99D0C1B21B55B005EDF41 /* GameScene.m */,
 				95E37DAC1B22FA20007F993F /* MyUtils.h */,
+				9556E20A1B285BAF00BB95B5 /* GameOverScene.h */,
+				9556E20B1B285BAF00BB95B5 /* GameOverScene.m */,
 				95A99D101B21B55B005EDF41 /* GameViewController.h */,
 				95A99D111B21B55B005EDF41 /* GameViewController.m */,
 				95A99D131B21B55B005EDF41 /* Main.storyboard */,
@@ -286,6 +291,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9556E20C1B285BAF00BB95B5 /* GameOverScene.m in Sources */,
 				95A99D121B21B55B005EDF41 /* GameViewController.m in Sources */,
 				95A99D0A1B21B55B005EDF41 /* AppDelegate.m in Sources */,
 				95A99D0D1B21B55B005EDF41 /* GameScene.m in Sources */,

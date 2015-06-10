@@ -8,6 +8,7 @@
 
 #import "GameScene.h"
 #import "MyUtils.h"
+#import "GameOverScene.h"
 
 
 static const CGFloat ZOMBIE_ROTATE_RADIANS_PER_SEC = 4.0 * M_PI;
@@ -28,6 +29,8 @@ static const CGFloat CAT_MOVE_POINTS_PER_SEC = DEFAULT_MOVE_POINTS_VALUE;
 @property (strong, nonatomic) SKAction *catCollisionSound; // Sound of cat
 @property (strong, nonatomic) SKAction *enemyCollisionSound; // Sound of enemy
 @property (nonatomic, getter=isZombieInvincible) BOOL zombieInvincible;
+@property (nonatomic) NSUInteger lives; // Player number of lives
+@property (nonatomic, getter=isGameOver) BOOL gameOver;
 
 @end;
 
@@ -70,6 +73,8 @@ static const CGFloat CAT_MOVE_POINTS_PER_SEC = DEFAULT_MOVE_POINTS_VALUE;
         _enemyCollisionSound = [SKAction playSoundFileNamed:@"hitCatLady.wav" waitForCompletion:YES];
         
         _zombieInvincible = NO;
+        _lives = 5;
+        _gameOver = NO;
     }
     return self;
 }
@@ -102,7 +107,7 @@ static const CGFloat CAT_MOVE_POINTS_PER_SEC = DEFAULT_MOVE_POINTS_VALUE;
     
     // Run spawnenemy infinitely
     SKAction *sequence = [SKAction sequence:@[[SKAction performSelector:@selector(spawnEnemy) onTarget:self],
-                                              [SKAction waitForDuration:2.0]]];
+                                              [SKAction waitForDuration:4.0]]];
     [self runAction:[SKAction repeatActionForever:sequence]];
     
     // Spawn cats infinitely
@@ -126,6 +131,13 @@ static const CGFloat CAT_MOVE_POINTS_PER_SEC = DEFAULT_MOVE_POINTS_VALUE;
     [self rotateSprite:self.zombieNode toFace:self.velocity rotationSpeed:ZOMBIE_ROTATE_RADIANS_PER_SEC];
     [self distanceBetweenTouchCheckZombie];
     [self moveTrain]; // Checks for train cats and follows
+    
+    // Check for lose condition
+    if (self.lives <= 0 && !self.isGameOver) {
+        self.gameOver = true;
+        NSLog(@"You lose");
+        [self presentGameOverScreenDidWin:NO];
+    }
 }
 
 // Executed after SKScene evals actions after update:
@@ -165,11 +177,10 @@ static const CGFloat CAT_MOVE_POINTS_PER_SEC = DEFAULT_MOVE_POINTS_VALUE;
     // Randomly position y
     CGFloat randomFloatY = CGFloatRandomRange(CGRectGetMinY(self.playableRect) + enemy.size.height/2,
                                               CGRectGetMaxY(self.playableRect) - enemy.size.height/2);
-    NSLog(@"Random float: %f", randomFloatY);
     enemy.position = CGPointMake(self.size.width + enemy.size.width/2, randomFloatY);
     
     [self addChild:enemy];
-    SKAction *actionMove = [SKAction moveToX:-enemy.size.width/2 duration:2.0];
+    SKAction *actionMove = [SKAction moveToX:-enemy.size.width/2 duration:4.0];
     // Remove node
     SKAction *actionRemove = [SKAction removeFromParent];
     [enemy runAction:[SKAction sequence:@[actionMove, actionRemove]]];
@@ -318,9 +329,10 @@ static const CGFloat CAT_MOVE_POINTS_PER_SEC = DEFAULT_MOVE_POINTS_VALUE;
 // Runs every update: to make cat follow the zombie
 - (void)moveTrain {
     __block CGPoint targetPosition = self.zombieNode.position;
-    
+    __block NSUInteger trainCount = 0;
     [self enumerateChildNodesWithName:@"train"
                            usingBlock:^(SKNode *node, BOOL *stop) {
+                               trainCount++;
                                if (![node hasActions]) {
                                    // Follow zombie over 0.3 s
                                    CGFloat actionDuration = 0.3;
@@ -335,13 +347,23 @@ static const CGFloat CAT_MOVE_POINTS_PER_SEC = DEFAULT_MOVE_POINTS_VALUE;
         // Make new target position the latest cat added
         // Make latest node follow last node
         targetPosition = node.position;
+                               
+        // Check for win condition;
+        if (trainCount >= 30 && !self.isGameOver) {
+            self.gameOver = true;
+            NSLog(@"You win");
+            [self presentGameOverScreenDidWin:YES];
+        }
     }];
 }
 // Remove current enemy from node
 - (void)zombieHitEnemy:(SKSpriteNode *)enemy {
     [self runAction:self.enemyCollisionSound];
-    self.zombieInvincible = YES;
+    // Lose 2 cats and a life
+    [self loseCats];
+    self.lives--;
     // Blink zombie after hit using hidden property
+    self.zombieInvincible = YES;
     CGFloat duration = 3.0;
     CGFloat blinkTimes = 10.0;
     SKAction *blinkAction = [SKAction customActionWithDuration:duration actionBlock:^(SKNode *node, CGFloat elapsedTime) {
@@ -356,6 +378,26 @@ static const CGFloat CAT_MOVE_POINTS_PER_SEC = DEFAULT_MOVE_POINTS_VALUE;
         
     }]]];
     [self.zombieNode runAction:sequence];
+}
+
+// If zombie is hit, remove first two cats
+- (void)loseCats {
+    __block NSUInteger loseCount = 0;
+    [self enumerateChildNodesWithName:@"train" usingBlock:^(SKNode *node, BOOL *stop) {
+        CGPoint randomSpot = node.position;
+        randomSpot.x += CGFloatRandomRange(-100.0, 100.0);
+        randomSpot.y += CGFloatRandomRange(-100.0, 100.0);
+        
+        node.name = @"";
+        // Rotate, move to random spot, scale to dissapear
+        SKAction *group = [SKAction group:@[[SKAction rotateByAngle:M_PI*4 duration:1.0], [SKAction moveTo:randomSpot duration:1.0], [SKAction scaleTo:0 duration:1.0]]];
+        [node runAction:[SKAction sequence:@[group, [SKAction removeFromParent]]]];
+        loseCount++;
+        
+        if (loseCount >= 2) {
+            *stop = YES;
+        }
+    }];
 }
 
 #pragma mark Private
@@ -421,6 +463,13 @@ static const CGFloat CAT_MOVE_POINTS_PER_SEC = DEFAULT_MOVE_POINTS_VALUE;
     [self moveZombieToward:touchLocation];
 }
 
-
+#pragma mark Scene Transition
+- (void)presentGameOverScreenDidWin:(BOOL)won
+{
+    GameOverScene *gameOverScene = [[GameOverScene alloc]
+                                    initWithSize:self.size isWon:won];
+    SKTransition *reveal = [SKTransition flipHorizontalWithDuration:0.5];
+    [self.view presentScene:gameOverScene transition:reveal];
+}
 
 @end
