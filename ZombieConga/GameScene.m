@@ -405,6 +405,7 @@ static const CGFloat CAT_MOVE_POINTS_PER_SEC = DEFAULT_MOVE_POINTS_VALUE;
 
 #pragma mark Private
 
+// custom initializer for music player
 - (void)playBackgroundMusicWithFilname:(NSString *)filename {
     NSURL *url = [[NSBundle mainBundle] URLForResource:filename withExtension:nil];
     if (url == nil) {

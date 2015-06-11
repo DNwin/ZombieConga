@@ -7,7 +7,7 @@
 //
 
 #import "GameViewController.h"
-#import "GameScene.h"
+#import "MainMenuScene.h"
 
 @implementation SKScene (Unarchive)
 
@@ -21,7 +21,7 @@
     [super viewDidLoad];
     
     // Init a gamescene with hardcoded size 2048x1536
-    GameScene *scene = [[GameScene alloc] initWithSize:CGSizeMake(2048, 1536)];
+    MainMenuScene *scene = [[MainMenuScene alloc] initWithSize:CGSizeMake(2048, 1536)];
     // Get current view and configure it
     SKView *skView = (SKView *)self.view;
     skView.showsFPS = YES;

@@ -13,6 +13,7 @@
 		9556E2071B28292A00BB95B5 /* lose.wav in Resources */ = {isa = PBXBuildFile; fileRef = 9556E2021B28292A00BB95B5 /* lose.wav */; };
 		9556E2081B28292A00BB95B5 /* win.wav in Resources */ = {isa = PBXBuildFile; fileRef = 9556E2031B28292A00BB95B5 /* win.wav */; };
 		9556E20C1B285BAF00BB95B5 /* GameOverScene.m in Sources */ = {isa = PBXBuildFile; fileRef = 9556E20B1B285BAF00BB95B5 /* GameOverScene.m */; };
+		9556E20F1B2972E500BB95B5 /* MainMenuScene.m in Sources */ = {isa = PBXBuildFile; fileRef = 9556E20E1B2972E500BB95B5 /* MainMenuScene.m */; };
 		95A99D071B21B55B005EDF41 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 95A99D061B21B55B005EDF41 /* main.m */; };
 		95A99D0A1B21B55B005EDF41 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 95A99D091B21B55B005EDF41 /* AppDelegate.m */; };
 		95A99D0D1B21B55B005EDF41 /* GameScene.m in Sources */ = {isa = PBXBuildFile; fileRef = 95A99D0C1B21B55B005EDF41 /* GameScene.m */; };
@@ -47,6 +48,8 @@
 		9556E2031B28292A00BB95B5 /* win.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = win.wav; sourceTree = "<group>"; };
 		9556E20A1B285BAF00BB95B5 /* GameOverScene.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GameOverScene.h; sourceTree = "<group>"; };
 		9556E20B1B285BAF00BB95B5 /* GameOverScene.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GameOverScene.m; sourceTree = "<group>"; };
+		9556E20D1B2972E500BB95B5 /* MainMenuScene.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MainMenuScene.h; sourceTree = "<group>"; };
+		9556E20E1B2972E500BB95B5 /* MainMenuScene.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MainMenuScene.m; sourceTree = "<group>"; };
 		95A99D011B21B55B005EDF41 /* ZombieConga.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ZombieConga.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		95A99D051B21B55B005EDF41 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		95A99D061B21B55B005EDF41 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
@@ -134,6 +137,8 @@
 				9556E20B1B285BAF00BB95B5 /* GameOverScene.m */,
 				95A99D101B21B55B005EDF41 /* GameViewController.h */,
 				95A99D111B21B55B005EDF41 /* GameViewController.m */,
+				9556E20D1B2972E500BB95B5 /* MainMenuScene.h */,
+				9556E20E1B2972E500BB95B5 /* MainMenuScene.m */,
 				95A99D131B21B55B005EDF41 /* Main.storyboard */,
 				95A99D161B21B55B005EDF41 /* Images.xcassets */,
 				95A99D181B21B55B005EDF41 /* LaunchScreen.xib */,
@@ -295,6 +300,7 @@
 				95A99D121B21B55B005EDF41 /* GameViewController.m in Sources */,
 				95A99D0A1B21B55B005EDF41 /* AppDelegate.m in Sources */,
 				95A99D0D1B21B55B005EDF41 /* GameScene.m in Sources */,
+				9556E20F1B2972E500BB95B5 /* MainMenuScene.m in Sources */,
 				95A99D071B21B55B005EDF41 /* main.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
