@@ -143,7 +143,10 @@ static const CGFloat CAT_MOVE_POINTS_PER_SEC = DEFAULT_MOVE_POINTS_VALUE;
     [self moveSprite:self.zombieNode withVelocity:self.velocity];
     [self boundsCheckZombie];
     [self rotateSprite:self.zombieNode toFace:self.velocity rotationSpeed:ZOMBIE_ROTATE_RADIANS_PER_SEC];
-    [self distanceBetweenTouchCheckZombie];
+    
+    // Since background is scrolling, no need to stop movement animation
+    // [self distanceBetweenTouchCheckZombie];
+    
     [self moveTrain]; // Checks for train cats and follows
     
     // Check for lose condition
@@ -206,13 +209,13 @@ static const CGFloat CAT_MOVE_POINTS_PER_SEC = DEFAULT_MOVE_POINTS_VALUE;
 
 - (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event {
     UITouch *touch = [touches anyObject];
-    CGPoint touchLocation = [touch locationInNode:self];
+    CGPoint touchLocation = [touch locationInNode:self.backgroundLayer];
     [self sceneTouched:touchLocation];
 }
 
 - (void)touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event {
     UITouch *touch = [touches anyObject];
-    CGPoint touchLocation = [touch locationInNode:self];
+    CGPoint touchLocation = [touch locationInNode:self.backgroundLayer];
     [self sceneTouched:touchLocation];
 }
 
@@ -225,10 +228,12 @@ static const CGFloat CAT_MOVE_POINTS_PER_SEC = DEFAULT_MOVE_POINTS_VALUE;
     // Randomly position y
     CGFloat randomFloatY = CGFloatRandomRange(CGRectGetMinY(self.playableRect) + enemy.size.height/2,
                                               CGRectGetMaxY(self.playableRect) - enemy.size.height/2);
-    enemy.position = CGPointMake(self.size.width + enemy.size.width/2, randomFloatY);
+    // Set enemy position in terms of bg layer
+    CGPoint scenePos = CGPointMake(self.size.width + enemy.size.width/2, randomFloatY);
+    enemy.position = [self.backgroundLayer convertPoint:scenePos fromNode:self];
     
     [self.backgroundLayer addChild:enemy];
-    SKAction *actionMove = [SKAction moveToX:-enemy.size.width/2 duration:4.0];
+    SKAction *actionMove = [SKAction moveByX:-self.size.width-enemy.size.width y:0 duration:2.0];
     // Remove node
     SKAction *actionRemove = [SKAction removeFromParent];
     [enemy runAction:[SKAction sequence:@[actionMove, actionRemove]]];
@@ -282,10 +287,12 @@ static const CGFloat CAT_MOVE_POINTS_PER_SEC = DEFAULT_MOVE_POINTS_VALUE;
 - (void)spawnCat {
     SKSpriteNode *cat = [[SKSpriteNode alloc] initWithImageNamed:@"cat"];
     cat.name = @"cat";
-    cat.position = CGPointMake(CGFloatRandomRange(CGRectGetMinX(self.playableRect),
-                                                  CGRectGetMaxX(self.playableRect)),
-                               CGFloatRandomRange(CGRectGetMinY(self.playableRect),
-                                                  CGRectGetMaxY(self.playableRect)));
+    CGPoint scenePoint = CGPointMake(CGFloatRandomRange(CGRectGetMinX(self.playableRect),
+                                                        CGRectGetMaxX(self.playableRect)),
+                                     CGFloatRandomRange(CGRectGetMinY(self.playableRect),
+                                                        CGRectGetMaxY(self.playableRect)));
+    // Set position in terms of background layer
+    cat.position = [self.backgroundLayer convertPoint:scenePoint fromNode:self];
     [cat setScale:0]; // Basically invisible
     [self.backgroundLayer addChild:cat];
     
@@ -322,7 +329,7 @@ static const CGFloat CAT_MOVE_POINTS_PER_SEC = DEFAULT_MOVE_POINTS_VALUE;
     self.backgroundLayer.position =
         CGPointAdd(self.backgroundLayer.position, amountToMove);
     
-                                                        NSLog(@"%f", self.backgroundLayer.position.x);
+    //NSLog(@"%f", self.backgroundLayer.position.x);
     
     [self.backgroundLayer enumerateChildNodesWithName:@"background"
                                            usingBlock:^(SKNode *node, BOOL *stop)
@@ -330,15 +337,14 @@ static const CGFloat CAT_MOVE_POINTS_PER_SEC = DEFAULT_MOVE_POINTS_VALUE;
         SKSpriteNode *background = (SKSpriteNode *)node;
         // If a background moves off screen to left,
         // Move it to the right of the 2nd background
-        if (background.position.x <= -background.size.width) {
+        CGPoint backgroundScreenPos = [self.backgroundLayer convertPoint:background.position toNode:self];
+        if (backgroundScreenPos.x <= -background.size.width) {
+            // Current position should be negative width
             background.position =
-                CGPointMake(-background.position.x + background.size.width * 2,
+                CGPointMake(background.position.x + background.size.width * 2,
                                               background.position.y);
         }
     }];
-    
-    
-    
 }
 
 
@@ -512,31 +518,39 @@ static const CGFloat CAT_MOVE_POINTS_PER_SEC = DEFAULT_MOVE_POINTS_VALUE;
 
 // Checks the current position of zombie, reverses velocity if out of bounds
 - (void)boundsCheckZombie {
-    // Set points to playable rect
-    CGPoint bottomLeft = CGPointMake(0, CGRectGetMinY(self.playableRect));
-    CGPoint topRight = CGPointMake(CGRectGetWidth(self.playableRect),
-                                   CGRectGetMaxY(self.playableRect));
+    // Get points of playablerect in terms of backgroundLayer
+    // Points should be increasing as background moves left
+    CGPoint bottomLeft = [self.backgroundLayer
+                          convertPoint:CGPointMake(0, CGRectGetMinY(self.playableRect))
+                          fromNode:self];
+    CGPoint topRight = [self.backgroundLayer
+                        convertPoint:CGPointMake(CGRectGetWidth(self.playableRect),
+                                                 CGRectGetMaxY(self.playableRect))
+                        fromNode:self];
     
     CGPoint newPosition = self.zombieNode.position;
-    CGPoint newVelociy = self.velocity;
+    CGPoint newVelocity = self.velocity;
     
     // Check x bounds
-    if (self.zombieNode.position.x <= bottomLeft.x) {
-        newVelociy.x = -newVelociy.x;
+    if (newPosition.x <= bottomLeft.x) {
+        newPosition.x = bottomLeft.x;
+        newVelocity.x = -newVelocity.x;
     }
-    if (self.zombieNode.position.x >= topRight.x) {
-        newVelociy.x = -newVelociy.x;
+    if (newPosition.x >= topRight.x) {
+        newPosition.x = topRight.x;
+        newVelocity.x = -newVelocity.x;
     }
-    // Check Y bounds
-    if (self.zombieNode.position.y <= bottomLeft.y) {
-        newVelociy.y = -newVelociy.y;
+    if (newPosition.y <= bottomLeft.y) {
+        newPosition.y = bottomLeft.y;
+        newVelocity.y = -newVelocity.y;
     }
-    if (self.zombieNode.position.y >= topRight.y) {
-        newVelociy.y = -newVelociy.y;
+    if (newPosition.y >= topRight.y) {
+        newPosition.y = topRight.y;
+        newVelocity.y = -newVelocity.y;
     }
     
     self.zombieNode.position = newPosition;
-    self.velocity = newVelociy;
+    self.velocity = newVelocity;
 }
 
 
