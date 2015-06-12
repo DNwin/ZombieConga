@@ -21,13 +21,14 @@ static const CGFloat CAT_MOVE_POINTS_PER_SEC = DEFAULT_MOVE_POINTS_VALUE;
 
 @property (strong, nonatomic) AVAudioPlayer *backgroundMusicPlayer;
 @property (strong, nonatomic) SKSpriteNode *zombieNode; // zombie node;
+@property (strong, nonatomic) SKSpriteNode *backgroundLayer; // Layer containing sprites
 
 @property (nonatomic) NSTimeInterval lastUpdateTime;
 @property (nonatomic) NSTimeInterval dt; // Time per frame in ms
 @property (nonatomic) CGFloat zombieMovePointsPerSec; // Desired pixels/sec
 @property (nonatomic) CGFloat backgroundMovePointsPerSec; // Pixels/sec background
 @property (nonatomic) CGPoint velocity; // Current velocity of the zombie
-@property (nonatomic) CGRect playableRect; // Playable rectangle
+@property (nonatomic) CGRect playableRect; // Playable rectangle in terms of larger scene
 @property (nonatomic) CGPoint lastTouchLocation; // Last location touched
 
 @property (strong, nonatomic) SKAction *zombieAnimation; // Animation action
@@ -50,6 +51,8 @@ static const CGFloat CAT_MOVE_POINTS_PER_SEC = DEFAULT_MOVE_POINTS_VALUE;
     self = [super initWithSize:size];
     if (self) {
         _zombieNode = [[SKSpriteNode alloc] initWithImageNamed:@"zombie1"];
+        _backgroundLayer = [[SKSpriteNode alloc] init];
+        
         _lastUpdateTime = 0;
         _dt = 0;
         _velocity = CGPointZero;
@@ -92,33 +95,28 @@ static const CGFloat CAT_MOVE_POINTS_PER_SEC = DEFAULT_MOVE_POINTS_VALUE;
 }
 
 - (void) didMoveToView:(SKView *)view {
-    self.backgroundColor = [SKColor whiteColor];
-    [self playBackgroundMusicWithFilname:@"backgroundMusic.mp3"];
+    self.backgroundLayer.zPosition = -1;
+    [self addChild:self.backgroundLayer];
     
-    SKSpriteNode *background = self.backgroundNode;
-    background.anchorPoint = CGPointZero;
-    background.position = CGPointZero;
-    background.name = @"background";
-    // Set z position to prevent nodes from spawning under background
-    background.zPosition = -1;
-    [self addChild:background];
+    self.backgroundColor = [SKColor whiteColor];
     
     // Place two background nodes side by side;
     for (int i = 0; i <= 1; i++) {
-        SKSpriteNode *background = self.backgroundNode;
+        SKSpriteNode *background = [self backgroundNode];
         background.anchorPoint = CGPointZero;
         background.position = CGPointMake(background.size.width * (CGFloat)i, 0);
         background.name = @"background";
-        [self addChild:background];
+        [self.backgroundLayer addChild:background];
     }
     
+    [self playBackgroundMusicWithFilname:@"backgroundMusic.mp3"];
     // DEBUG ** draws red rectangle around playable area
     [self debugDrawPlayableArea];
 
     // Setup and add zombie node
     self.zombieNode.zPosition = 100; // Zombie on top
     self.zombieNode.position = CGPointMake(400.0, 400.0);
-    [self addChild:self.zombieNode];
+    [self.backgroundLayer addChild:self.zombieNode];
     // [self.zombieNode runAction:[SKAction repeatActionForever:self.zombieAnimation]];
     
     // Run spawnenemy infinitely
@@ -229,7 +227,7 @@ static const CGFloat CAT_MOVE_POINTS_PER_SEC = DEFAULT_MOVE_POINTS_VALUE;
                                               CGRectGetMaxY(self.playableRect) - enemy.size.height/2);
     enemy.position = CGPointMake(self.size.width + enemy.size.width/2, randomFloatY);
     
-    [self addChild:enemy];
+    [self.backgroundLayer addChild:enemy];
     SKAction *actionMove = [SKAction moveToX:-enemy.size.width/2 duration:4.0];
     // Remove node
     SKAction *actionRemove = [SKAction removeFromParent];
@@ -289,7 +287,7 @@ static const CGFloat CAT_MOVE_POINTS_PER_SEC = DEFAULT_MOVE_POINTS_VALUE;
                                CGFloatRandomRange(CGRectGetMinY(self.playableRect),
                                                   CGRectGetMaxY(self.playableRect)));
     [cat setScale:0]; // Basically invisible
-    [self addChild:cat];
+    [self.backgroundLayer addChild:cat];
     
     // Show cat
     SKAction *appear = [SKAction scaleTo:1.0 duration:0.5];
@@ -315,21 +313,32 @@ static const CGFloat CAT_MOVE_POINTS_PER_SEC = DEFAULT_MOVE_POINTS_VALUE;
     [cat runAction:[SKAction sequence:actions]];
 }
 
+// Moves the background layer continuously to the left every update:
 - (void)moveBackground {
-    [self enumerateChildNodesWithName:@"background" usingBlock:^(SKNode *node, BOOL *stop) {
+    // Move the background layer instead of individual sprites
+    CGPoint backgroundVelocity =
+        CGPointMake(-self.backgroundMovePointsPerSec, 0);
+    CGPoint amountToMove = CGPointMultiplyScalar(backgroundVelocity, self.dt);
+    self.backgroundLayer.position =
+        CGPointAdd(self.backgroundLayer.position, amountToMove);
+    
+                                                        NSLog(@"%f", self.backgroundLayer.position.x);
+    
+    [self.backgroundLayer enumerateChildNodesWithName:@"background"
+                                           usingBlock:^(SKNode *node, BOOL *stop)
+    {
         SKSpriteNode *background = (SKSpriteNode *)node;
-        // Move background to the left
-        CGPoint backgroundVelocity = CGPointMake(-self.backgroundMovePointsPerSec, 0);
-        CGPoint amountToMove = CGPointMultiplyScalar(backgroundVelocity, self.dt);
-        
-        CGPoint pos = background.position;
-        pos = CGPointAdd(pos, amountToMove);
-        background.position = pos;
-        
+        // If a background moves off screen to left,
+        // Move it to the right of the 2nd background
         if (background.position.x <= -background.size.width) {
-            background.position = CGPointMake(background.position.x + background.size.width *2, background.position.y);
+            background.position =
+                CGPointMake(-background.position.x + background.size.width * 2,
+                                              background.position.y);
         }
     }];
+    
+    
+    
 }
 
 
@@ -351,7 +360,7 @@ static const CGFloat CAT_MOVE_POINTS_PER_SEC = DEFAULT_MOVE_POINTS_VALUE;
     NSMutableArray *hitCats = [[NSMutableArray alloc] init];
     
     // Go through all cats and check intersection, add the cat to array
-    [self enumerateChildNodesWithName:@"cat"
+    [self.backgroundLayer enumerateChildNodesWithName:@"cat"
                            usingBlock:^(SKNode *node, BOOL *stop) {
         SKSpriteNode *cat = (SKSpriteNode *)node;
         if (CGRectIntersectsRect(cat.frame, self.zombieNode.frame)) {
@@ -366,7 +375,7 @@ static const CGFloat CAT_MOVE_POINTS_PER_SEC = DEFAULT_MOVE_POINTS_VALUE;
     // Do same for enemy collision
     if (!self.isZombieInvincible) {
         NSMutableArray *hitEnemies = [[NSMutableArray alloc] init];
-        [self enumerateChildNodesWithName:@"enemy" usingBlock:^(SKNode *node, BOOL *stop) {
+        [self.backgroundLayer enumerateChildNodesWithName:@"enemy" usingBlock:^(SKNode *node, BOOL *stop) {
             SKSpriteNode *enemy = (SKSpriteNode *)node;
             if (CGRectIntersectsRect(CGRectInset(node.frame, 20, 20), self.zombieNode.frame)) {
             [hitEnemies addObject:enemy];
@@ -397,7 +406,7 @@ static const CGFloat CAT_MOVE_POINTS_PER_SEC = DEFAULT_MOVE_POINTS_VALUE;
 - (void)moveTrain {
     __block CGPoint targetPosition = self.zombieNode.position;
     __block NSUInteger trainCount = 0;
-    [self enumerateChildNodesWithName:@"train"
+    [self.backgroundLayer enumerateChildNodesWithName:@"train"
                            usingBlock:^(SKNode *node, BOOL *stop) {
                                trainCount++;
                                if (![node hasActions]) {
@@ -450,7 +459,7 @@ static const CGFloat CAT_MOVE_POINTS_PER_SEC = DEFAULT_MOVE_POINTS_VALUE;
 // If zombie is hit, remove first two cats
 - (void)loseCats {
     __block NSUInteger loseCount = 0;
-    [self enumerateChildNodesWithName:@"train" usingBlock:^(SKNode *node, BOOL *stop) {
+    [self.backgroundLayer enumerateChildNodesWithName:@"train" usingBlock:^(SKNode *node, BOOL *stop) {
         CGPoint randomSpot = node.position;
         randomSpot.x += CGFloatRandomRange(-100.0, 100.0);
         randomSpot.y += CGFloatRandomRange(-100.0, 100.0);
@@ -557,6 +566,7 @@ static const CGFloat CAT_MOVE_POINTS_PER_SEC = DEFAULT_MOVE_POINTS_VALUE;
     GameOverScene *gameOverScene = [[GameOverScene alloc]
                                     initWithSize:self.size isWon:won];
     SKTransition *reveal = [SKTransition flipHorizontalWithDuration:0.5];
+    gameOverScene.scaleMode = self.scaleMode;
     [self.view presentScene:gameOverScene transition:reveal];
 }
 
