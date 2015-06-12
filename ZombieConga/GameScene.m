@@ -15,14 +15,17 @@
 static const CGFloat ZOMBIE_ROTATE_RADIANS_PER_SEC = 4.0 * M_PI;
 #define DEFAULT_MOVE_POINTS_VALUE 480.0
 static const CGFloat CAT_MOVE_POINTS_PER_SEC = DEFAULT_MOVE_POINTS_VALUE;
+#define BACKGROUND_MOVE_POINTS_PER_SEC 200.0;
 
 @interface GameScene()
 
 @property (strong, nonatomic) AVAudioPlayer *backgroundMusicPlayer;
 @property (strong, nonatomic) SKSpriteNode *zombieNode; // zombie node;
+
 @property (nonatomic) NSTimeInterval lastUpdateTime;
 @property (nonatomic) NSTimeInterval dt; // Time per frame in ms
 @property (nonatomic) CGFloat zombieMovePointsPerSec; // Desired pixels/sec
+@property (nonatomic) CGFloat backgroundMovePointsPerSec; // Pixels/sec background
 @property (nonatomic) CGPoint velocity; // Current velocity of the zombie
 @property (nonatomic) CGRect playableRect; // Playable rectangle
 @property (nonatomic) CGPoint lastTouchLocation; // Last location touched
@@ -92,12 +95,22 @@ static const CGFloat CAT_MOVE_POINTS_PER_SEC = DEFAULT_MOVE_POINTS_VALUE;
     self.backgroundColor = [SKColor whiteColor];
     [self playBackgroundMusicWithFilname:@"backgroundMusic.mp3"];
     
-    SKSpriteNode *background = [[SKSpriteNode alloc] initWithImageNamed:@"background1"];
-    // Set background position using the size of the view
-    background.position = CGPointMake(self.size.width/2, self.size.height/2);
+    SKSpriteNode *background = self.backgroundNode;
+    background.anchorPoint = CGPointZero;
+    background.position = CGPointZero;
+    background.name = @"background";
     // Set z position to prevent nodes from spawning under background
     background.zPosition = -1;
     [self addChild:background];
+    
+    // Place two background nodes side by side;
+    for (int i = 0; i <= 1; i++) {
+        SKSpriteNode *background = self.backgroundNode;
+        background.anchorPoint = CGPointZero;
+        background.position = CGPointMake(background.size.width * (CGFloat)i, 0);
+        background.name = @"background";
+        [self addChild:background];
+    }
     
     // DEBUG ** draws red rectangle around playable area
     [self debugDrawPlayableArea];
@@ -141,6 +154,9 @@ static const CGFloat CAT_MOVE_POINTS_PER_SEC = DEFAULT_MOVE_POINTS_VALUE;
         NSLog(@"You lose");
         [self presentGameOverScreenDidWin:NO];
     }
+    
+    // Background
+    [self moveBackground];
 }
 
 // Executed after SKScene evals actions after update:
@@ -156,6 +172,37 @@ static const CGFloat CAT_MOVE_POINTS_PER_SEC = DEFAULT_MOVE_POINTS_VALUE;
         _zombieMovePointsPerSec = DEFAULT_MOVE_POINTS_VALUE;
     }
     return _zombieMovePointsPerSec;
+}
+
+- (CGFloat)backgroundMovePointsPerSec {
+    if (!_backgroundMovePointsPerSec) {
+        _backgroundMovePointsPerSec = BACKGROUND_MOVE_POINTS_PER_SEC;
+    }
+    return _backgroundMovePointsPerSec;
+}
+
+// Returns a background consisting of multiple backgrounds
+
+- (SKSpriteNode *)backgroundNode {
+    SKSpriteNode *bn = [[SKSpriteNode alloc] init];
+    
+    // Make two backgrounds
+    SKSpriteNode *background1 = [[SKSpriteNode alloc]
+                                 initWithImageNamed:@"background1"];
+    background1.anchorPoint = CGPointZero;
+    background1.position = CGPointMake(0, 0);
+    [bn addChild:background1];
+    
+    SKSpriteNode *background2 = [[SKSpriteNode alloc]
+                                 initWithImageNamed:@"background2"];
+    background2.anchorPoint = CGPointZero;
+    background1.position = CGPointMake(self.size.width, 0);
+    [bn addChild:background2];
+    // Adjust size of bn to be 2x a reg node
+    bn.size = CGSizeMake(background1.size.width +
+                         background2.size.width, background1.size.height);
+    
+    return bn;
 }
 #pragma mark - Touch
 
@@ -266,6 +313,23 @@ static const CGFloat CAT_MOVE_POINTS_PER_SEC = DEFAULT_MOVE_POINTS_VALUE;
     
     NSArray *actions = @[appear, groupWait, dissapear, removeFromParent];
     [cat runAction:[SKAction sequence:actions]];
+}
+
+- (void)moveBackground {
+    [self enumerateChildNodesWithName:@"background" usingBlock:^(SKNode *node, BOOL *stop) {
+        SKSpriteNode *background = (SKSpriteNode *)node;
+        // Move background to the left
+        CGPoint backgroundVelocity = CGPointMake(-self.backgroundMovePointsPerSec, 0);
+        CGPoint amountToMove = CGPointMultiplyScalar(backgroundVelocity, self.dt);
+        
+        CGPoint pos = background.position;
+        pos = CGPointAdd(pos, amountToMove);
+        background.position = pos;
+        
+        if (background.position.x <= -background.size.width) {
+            background.position = CGPointMake(background.position.x + background.size.width *2, background.position.y);
+        }
+    }];
 }
 
 

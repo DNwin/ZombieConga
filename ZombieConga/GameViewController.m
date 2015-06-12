@@ -8,6 +8,7 @@
 
 #import "GameViewController.h"
 #import "MainMenuScene.h"
+#import "GameScene.h"
 
 @implementation SKScene (Unarchive)
 

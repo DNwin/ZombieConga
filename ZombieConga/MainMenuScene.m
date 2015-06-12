@@ -22,8 +22,10 @@
 }
 
 - (void)sceneTapped {
-    GameScene *scene = [[GameScene alloc] initWithSize:CGSizeMake(2048, 1536)];
+    GameScene *scene = [[GameScene alloc] initWithSize:self.size];
+    scene.scaleMode = self.scaleMode;
     SKTransition *transition = [SKTransition doorwayWithDuration:0.5];
+
     [self.view presentScene:scene transition:transition];
 }
 
